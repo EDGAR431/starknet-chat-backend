@@ -7,8 +7,8 @@ use revolt_models::v0::{
     FieldsChannel, FieldsMember, FieldsMessage, FieldsRole, FieldsServer, FieldsUser,
     FieldsWebhook, Member, MemberCompositeKey, Message, PartialChannel, PartialEmoji,
     PartialMember, PartialMessage, PartialRole, PartialServer, PartialUser, PartialUserVoiceState,
-    PartialWebhook, PolicyChange, RemovalIntention, Report, Server, User, UserSettings,
-    UserVoiceState, Webhook,
+    PartialSoundboardSound, PartialWebhook, PolicyChange, RemovalIntention, Report, Server,
+    SoundboardSound, User, UserSettings, UserVoiceState, Webhook,
 };
 
 use crate::{Account, Database, Session};
@@ -265,6 +265,20 @@ pub enum EventV1 {
 
     /// Delete emoji
     EmojiDelete {
+        id: String,
+    },
+
+    /// New soundboard sound
+    SoundboardSoundCreate(SoundboardSound),
+
+    /// Update existing soundboard sound
+    SoundboardSoundUpdate {
+        id: String,
+        data: PartialSoundboardSound,
+    },
+
+    /// Delete soundboard sound
+    SoundboardSoundDelete {
         id: String,
     },
 

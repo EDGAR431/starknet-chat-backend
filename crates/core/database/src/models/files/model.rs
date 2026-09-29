@@ -71,6 +71,7 @@ auto_derived!(
         ChannelIcon,
         ServerIcon,
         RoleIcon,
+        SoundboardSound,
     }
 
     /// Information about what the file was used for
@@ -235,6 +236,30 @@ impl File {
             FileUsedFor {
                 id: parent.to_owned(),
                 object_type: FileUsedForType::Emoji,
+            },
+            uploader_id.to_owned(),
+        )
+        .await
+    }
+
+    /// Use a file for a soundboard sound
+    ///
+    /// Reuses the existing "attachments" bucket (the same one message
+    /// attachments already upload to) rather than a new Autumn bucket, since
+    /// Autumn itself is a separate service outside this fork and would not
+    /// recognise an unregistered tag.
+    pub async fn use_soundboard_sound(
+        db: &Database,
+        id: &str,
+        parent: &str,
+        uploader_id: &str,
+    ) -> Result<File> {
+        db.find_and_use_attachment(
+            id,
+            "attachments",
+            FileUsedFor {
+                id: parent.to_owned(),
+                object_type: FileUsedForType::SoundboardSound,
             },
             uploader_id.to_owned(),
         )

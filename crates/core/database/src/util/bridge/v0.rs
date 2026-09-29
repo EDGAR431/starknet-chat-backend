@@ -408,6 +408,38 @@ impl From<EmojiParent> for crate::EmojiParent {
     }
 }
 
+impl From<crate::SoundboardSound> for SoundboardSound {
+    fn from(value: crate::SoundboardSound) -> Self {
+        SoundboardSound {
+            id: value.id,
+            parent: value.parent.into(),
+            creator_id: value.creator_id,
+            name: value.name,
+            emoji: value.emoji,
+            file_id: value.file_id,
+            volume: value.volume,
+        }
+    }
+}
+
+impl From<crate::SoundboardSoundParent> for SoundboardSoundParent {
+    fn from(value: crate::SoundboardSoundParent) -> Self {
+        match value {
+            crate::SoundboardSoundParent::Detached => SoundboardSoundParent::Detached,
+            crate::SoundboardSoundParent::Server { id } => SoundboardSoundParent::Server { id },
+        }
+    }
+}
+
+impl From<SoundboardSoundParent> for crate::SoundboardSoundParent {
+    fn from(value: SoundboardSoundParent) -> Self {
+        match value {
+            SoundboardSoundParent::Detached => crate::SoundboardSoundParent::Detached,
+            SoundboardSoundParent::Server { id } => crate::SoundboardSoundParent::Server { id },
+        }
+    }
+}
+
 impl From<crate::File> for File {
     fn from(value: crate::File) -> Self {
         File {

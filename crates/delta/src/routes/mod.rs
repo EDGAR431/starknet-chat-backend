@@ -14,6 +14,7 @@ mod push;
 mod root;
 mod safety;
 mod servers;
+mod soundboard;
 mod sync;
 mod users;
 mod webhooks;
@@ -35,6 +36,7 @@ pub fn mount(config: Settings, mut rocket: Rocket<Build>) -> Rocket<Build> {
             "/servers" => servers::routes(),
             "/invites" => invites::routes(),
             "/custom" => customisation::routes(),
+            "/soundboard" => soundboard::routes(),
             "/safety" => safety::routes(),
             "/auth/account" => account::routes(),
             "/auth/session" => session::routes(),
@@ -56,6 +58,7 @@ pub fn mount(config: Settings, mut rocket: Rocket<Build>) -> Rocket<Build> {
             "/servers" => servers::routes(),
             "/invites" => invites::routes(),
             "/custom" => customisation::routes(),
+            "/soundboard" => soundboard::routes(),
             "/safety" => safety::routes(),
             "/auth/account" => account::routes(),
             "/auth/session" => session::routes(),

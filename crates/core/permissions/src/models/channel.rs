@@ -104,7 +104,10 @@ pub enum ChannelPermission {
     ViewAuditLogs = 1 << 40,
 
     // * Misc. permissions
-    // % Bits 41 to 52: free area
+    /// Play sounds from a soundboard in a voice call
+    UseSoundboard = 1 << 41,
+
+    // % Bits 42 to 52: free area
     // % Bits 53 to 64: do not use
 
     // * Grant all permissions
@@ -146,14 +149,20 @@ pub static DEFAULT_PERMISSION: Lazy<u64> = Lazy::new(|| {
 pub static DEFAULT_PERMISSION_SAVED_MESSAGES: u64 = ChannelPermission::GrantAllSafe as u64;
 
 pub static DEFAULT_PERMISSION_DIRECT_MESSAGE: Lazy<u64> = Lazy::new(|| {
-    DEFAULT_PERMISSION.add(ChannelPermission::ManageChannel + ChannelPermission::React + ChannelPermission::Masquerade)
+    DEFAULT_PERMISSION.add(
+        ChannelPermission::ManageChannel
+            + ChannelPermission::React
+            + ChannelPermission::Masquerade
+            + ChannelPermission::UseSoundboard,
+    )
 });
 
 pub static DEFAULT_PERMISSION_SERVER: Lazy<u64> = Lazy::new(|| {
     DEFAULT_PERMISSION.add(
         ChannelPermission::React
             + ChannelPermission::ChangeNickname
-            + ChannelPermission::ChangeAvatar,
+            + ChannelPermission::ChangeAvatar
+            + ChannelPermission::UseSoundboard,
     )
 });
 
