@@ -1,3 +1,34 @@
+//! Default soundboard sounds, seeded server-side onto every new personal
+//! soundboard and every new server's soundboard.
+//!
+//! ## Manual setup required
+//!
+//! Seeding requires uploading the bundled default sounds to Autumn on the
+//! server's behalf, and Autumn's upload endpoint requires an authenticated
+//! `User` (via either a session token or a bot token, see
+//! `crates/services/autumn/src/api.rs` and
+//! `crates/core/database/src/models/users/axum.rs`). There is no "service"
+//! identity for this, so a dedicated bot account must be created manually,
+//! once, by the server owner:
+//!
+//! 1. Create a bot account owned by an admin user (via the normal
+//!    bot-creation API/UI), to act as the "system bot" for seeding.
+//! 2. Copy that bot's token.
+//! 3. Set it as `system_bot_token` under a `[soundboard]` section in your
+//!    `Revolt.toml`:
+//!    ```toml
+//!    [soundboard]
+//!    system_bot_token = "<the bot token>"
+//!    ```
+//!    or, equivalently, via the `REVOLT_SOUNDBOARD__SYSTEM_BOT_TOKEN`
+//!    environment variable (this config system supports both `Revolt.toml`
+//!    and environment variable overrides, see `crates/core/config/src/lib.rs`).
+//! 4. Restart the `api` service so it picks up the new setting.
+//!
+//! Without this, `system_bot_token` is empty and default sound seeding is
+//! skipped (logged once per call, never an error) — the rest of the
+//! soundboard feature (user-created sounds, playback, etc.) is unaffected.
+
 use std::sync::LazyLock;
 
 use reqwest::Client;
@@ -62,19 +93,19 @@ static CLIENT: LazyLock<Client> = LazyLock::new(Client::new);
 /// "attachments", confirmed against the docs/vendored source rather than
 /// guessed).
 ///
-/// CAVEAT (flagged in the final report, not just here): Autumn's
-/// `upload_file` handler requires a session or bot authentication token
-/// (`security(session_token, bot_token)` in its OpenAPI annotation) tied to
-/// a real `User`. This helper has no such user-bound token to present, so
-/// as written this call will be rejected by an unmodified Autumn with 401
-/// Unauthorized until Autumn (or this fork) adds a service-to-service
-/// upload exception. Because every caller of this function treats upload
-/// failure as best-effort (see `seed_default_soundboard_sounds`), that
-/// means default sounds silently fail to seed today rather than breaking
-/// account/server creation — but it does mean the feature does not yet
-/// work end-to-end without that follow-up change.
+/// Autumn's `upload_file` handler requires a session or bot authentication
+/// token (`security(session_token, bot_token)` in its OpenAPI annotation)
+/// tied to a real `User`. For this server-side call, that token is the
+/// dedicated "system bot" configured at `settings.soundboard.system_bot_token`
+/// (see the module-level doc comment for the one-time manual setup this
+/// requires) and is sent using the same header Autumn's `User` extractor
+/// checks for bot tokens, `x-bot-token`.
+///
+/// Callers must ensure `bot_token` is non-empty before calling this
+/// function (see `seed_default_soundboard_sounds`).
 async fn upload_default_sound_to_autumn(
     settings: &Settings,
+    bot_token: &str,
     bytes: &'static [u8],
     filename: &str,
 ) -> Result<String> {
@@ -87,6 +118,7 @@ async fn upload_default_sound_to_autumn(
 
     let response = CLIENT
         .post(format!("{}/attachments", settings.hosts.autumn))
+        .header("x-bot-token", bot_token)
         .multipart(form)
         .send()
         .await
@@ -121,10 +153,16 @@ pub async fn seed_default_soundboard_sounds(
     parent: SoundboardSoundParent,
     creator_id: &str,
 ) {
+    let bot_token = settings.soundboard.system_bot_token.trim();
+    if bot_token.is_empty() {
+        warn!("soundboard: no system bot token configured, skipping default sound seeding");
+        return;
+    }
+
     for default in DEFAULT_SOUNDS {
         let filename = format!("{}.wav", default.name.to_lowercase());
 
-        let file_id = match upload_default_sound_to_autumn(settings, default.bytes, &filename).await {
+        let file_id = match upload_default_sound_to_autumn(settings, bot_token, default.bytes, &filename).await {
             Ok(id) => id,
             Err(err) => {
                 warn!("Failed to upload default soundboard sound {:?} to Autumn: {err:?}", default.name);

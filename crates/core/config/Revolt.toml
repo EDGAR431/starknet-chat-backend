@@ -10,6 +10,13 @@ mongodb = "mongodb://database"
 # Defaults to the container name specified in self-hosted
 redis = "redis://redis/"
 
+[soundboard]
+# Bot token for the dedicated "system bot" account used to seed default
+# soundboard sounds server-side (uploads them to Autumn on behalf of new
+# users/servers). Leave empty to disable default sound seeding.
+# Can also be set via the REVOLT_SOUNDBOARD__SYSTEM_BOT_TOKEN env var.
+system_bot_token = ""
+
 [hosts]
 # Web locations of various services
 # Defaults assume all services are reverse-proxied

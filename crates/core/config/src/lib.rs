@@ -139,6 +139,23 @@ pub struct Rabbit {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct Soundboard {
+    /// Bot token for the dedicated "system bot" account used to seed
+    /// default soundboard sounds server-side. Empty if not configured,
+    /// in which case default sound seeding is skipped.
+    #[serde(default)]
+    pub system_bot_token: String,
+}
+
+impl Default for Soundboard {
+    fn default() -> Self {
+        Self {
+            system_bot_token: String::new(),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct Hosts {
     pub app: String,
     pub api: String,
@@ -471,6 +488,8 @@ pub struct Settings {
     pub database: Database,
     pub rabbit: Rabbit,
     pub hosts: Hosts,
+    #[serde(default)]
+    pub soundboard: Soundboard,
     pub api: Api,
     pub pushd: Pushd,
     pub january: January,
