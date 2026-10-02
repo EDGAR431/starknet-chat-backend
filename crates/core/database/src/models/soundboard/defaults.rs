@@ -189,6 +189,7 @@ pub async fn seed_default_soundboard_sounds(
             emoji: None,
             file_id: attachment.id,
             volume: 100,
+            is_default: true,
         };
 
         if let Err(err) = sound.create(db).await {

@@ -67,6 +67,7 @@ pub async fn create_sound(
         emoji: data.emoji,
         file_id: attachment.id,
         volume,
+        is_default: false,
     };
 
     sound.create(db).await?;

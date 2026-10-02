@@ -28,6 +28,13 @@ auto_derived_partial!(
         /// Playback volume as a percentage, from 0 to 200 (100 is unchanged)
         #[serde(default = "default_volume")]
         pub volume: u16,
+        /// Whether this is a permanent, protected default sound that cannot be deleted
+        ///
+        /// This flag is internal-only: it is never part of `PartialSoundboardSound`
+        /// and can never be set via any edit route, only at seed time (see
+        /// `defaults.rs`).
+        #[serde(default)]
+        pub is_default: bool,
     },
     "PartialSoundboardSound"
 );

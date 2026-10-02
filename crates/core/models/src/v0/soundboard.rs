@@ -23,6 +23,9 @@ auto_derived!(
         pub file_id: String,
         /// Playback volume as a percentage, from 0 to 200 (100 is unchanged)
         pub volume: u16,
+        /// Whether this is a permanent, protected default sound that cannot be deleted
+        #[cfg_attr(feature = "serde", serde(default))]
+        pub is_default: bool,
     }
 
     /// Parent Id of the soundboard sound

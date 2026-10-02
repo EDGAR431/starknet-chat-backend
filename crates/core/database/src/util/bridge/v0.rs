@@ -418,6 +418,7 @@ impl From<crate::SoundboardSound> for SoundboardSound {
             emoji: value.emoji,
             file_id: value.file_id,
             volume: value.volume,
+            is_default: value.is_default,
         }
     }
 }

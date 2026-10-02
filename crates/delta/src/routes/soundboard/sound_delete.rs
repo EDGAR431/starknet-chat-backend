@@ -20,6 +20,13 @@ pub async fn delete_sound(
 ) -> Result<EmptyResponse> {
     let sound = db.fetch_soundboard_sound(sound_id.id).await?;
 
+    // Default (starter-pack) sounds are permanently protected and can never
+    // be deleted by anyone, including a server admin with
+    // ManageCustomisation or the sound's own creator.
+    if sound.is_default {
+        return Err(create_error!(InvalidOperation));
+    }
+
     // If we uploaded the sound, we may delete it ourselves
     if sound.creator_id != user.id {
         match &sound.parent {
