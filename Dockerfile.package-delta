@@ -1,0 +1,8 @@
+FROM debian:13 AS debian
+FROM gcr.io/distroless/cc-debian13:nonroot
+COPY target/release/revolt-delta ./revolt-delta
+COPY --from=debian /usr/bin/uname /usr/bin/uname
+EXPOSE 14702
+ENV ROCKET_ADDRESS=0.0.0.0
+USER nonroot
+CMD ["./revolt-delta"]
