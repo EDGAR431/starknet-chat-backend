@@ -59,16 +59,29 @@ def new_ulid():
     rand_part = "".join(random.choice(CROCKFORD) for _ in range(16))
     return time_part + rand_part
 
+UPLOAD_DELAY_SECONDS = 1.0  # pace requests well under the API's rate limit
+MAX_RETRIES = 5
+
 def upload_sound_to_autumn(b64_bytes, filename):
     raw = base64.b64decode(b64_bytes)
-    resp = requests.post(
-        f"{AUTUMN_BASE}/attachments",
-        headers={"x-bot-token": BOT_TOKEN},
-        files={"file": (filename, raw, "audio/wav")},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    return resp.json()["id"]
+    for attempt in range(1, MAX_RETRIES + 1):
+        resp = requests.post(
+            f"{AUTUMN_BASE}/attachments",
+            headers={"x-bot-token": BOT_TOKEN},
+            files={"file": (filename, raw, "audio/wav")},
+            timeout=30,
+        )
+        if resp.status_code == 429:
+            wait_ms = resp.headers.get("X-Ratelimit-Reset-After")
+            wait_s = (int(wait_ms) / 1000.0) if wait_ms else 10.0
+            wait_s += 0.5  # small safety margin
+            print(f"    rate-limited, waiting {wait_s:.1f}s (attempt {attempt}/{MAX_RETRIES})")
+            time.sleep(wait_s)
+            continue
+        resp.raise_for_status()
+        time.sleep(UPLOAD_DELAY_SECONDS)
+        return resp.json()["id"]
+    raise RuntimeError(f"gave up after {MAX_RETRIES} retries (still rate-limited)")
 
 def already_seeded(col, creator_id, parent_query):
     query = {"creator_id": creator_id, "name": {"$in": DEFAULT_NAMES}}
