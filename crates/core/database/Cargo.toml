@@ -109,4 +109,4 @@ lettre = { workspace = true }
 handlebars = { workspace = true }
 
 # Web Requests
-reqwest = { workspace = true, features = ["json", "form"] }
+reqwest = { workspace = true, features = ["json", "form", "multipart"] }

@@ -1,5 +1,5 @@
 use revolt_config::config;
-use revolt_database::{Database, Member, Server, User};
+use revolt_database::{seed_default_soundboard_sounds, Database, Member, Server, SoundboardSoundParent, User};
 use revolt_models::v0;
 use revolt_result::{create_error, Result};
 
@@ -50,6 +50,18 @@ pub async fn create_server(
 
     let (server, channels) = Server::create(db, data, &user, true).await?;
     let (_, channels) = Member::create(db, &server, &user, Some(channels)).await?;
+
+    // Best-effort: seed the new server's soundboard with the default
+    // sounds. Never allowed to fail server creation itself.
+    seed_default_soundboard_sounds(
+        db,
+        &config,
+        SoundboardSoundParent::Server {
+            id: server.id.clone(),
+        },
+        &user.id,
+    )
+    .await;
 
     Ok(Json(v0::CreateServerLegacyResponse {
         server: server.into(db).await,

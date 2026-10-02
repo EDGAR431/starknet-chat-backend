@@ -3,7 +3,7 @@ use revolt_database::{
     Database, SoundboardSoundParent, User,
 };
 use revolt_permissions::{calculate_server_permissions, ChannelPermission};
-use revolt_result::Result;
+use revolt_result::{create_error, Result};
 
 use rocket::State;
 use rocket_empty::EmptyResponse;
@@ -31,7 +31,10 @@ pub async fn delete_sound(
                     .await
                     .throw_if_lacking_channel_permission(ChannelPermission::ManageCustomisation)?;
             }
-            SoundboardSoundParent::Detached => return Ok(EmptyResponse),
+            // Detached (personal) sounds have no server-level permission
+            // concept to fall back on, so a non-creator never has
+            // permission to delete them.
+            SoundboardSoundParent::Detached => return Err(create_error!(NotFound)),
         };
     }
 

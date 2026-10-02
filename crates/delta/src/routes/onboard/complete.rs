@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use revolt_database::{Database, User, Session};
+use revolt_config::config;
+use revolt_database::{seed_default_soundboard_sounds, Database, Session, SoundboardSoundParent, User};
 use revolt_models::v0;
 use revolt_result::{create_error, Result};
 
@@ -44,10 +45,12 @@ pub async fn complete(
         })
     })?;
 
-    Ok(Json(
-        User::create(db, data.username, session.user_id, None)
-            .await?
-            .into_self(false)
-            .await,
-    ))
+    let user = User::create(db, data.username, session.user_id, None).await?;
+
+    // Best-effort: seed the new user's personal soundboard with the
+    // default sounds. Never allowed to fail onboarding itself.
+    let settings = config().await;
+    seed_default_soundboard_sounds(db, &settings, SoundboardSoundParent::Detached, &user.id).await;
+
+    Ok(Json(user.into_self(false).await))
 }
