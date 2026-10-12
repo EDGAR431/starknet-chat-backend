@@ -71,13 +71,14 @@ jobs:
           merge_base=$(git merge-base HEAD refs/remotes/pr)
           pr_head=$(git rev-parse refs/remotes/pr)
           pr_commits="$merge_base..$pr_head"
-          first_commit=$(git rev-list --reverse "$pr_commits" | head -n1)
-          primary_author=$(git show -s --format='%an <%ae>' "$first_commit")
+          read -r first_commit < <(git rev-list --reverse "$pr_commits")
+          primary_author_email=$(git show -s --format=%ae "$first_commit")
 
           trailers=(--if-exists addIfDifferent)
           while read -r co_author; do
             trailers+=(--trailer "Co-authored-by: $co_author")
-          done < <(git log --reverse --format='%an <%ae>' "$pr_commits" | grep -vxF "$primary_author")
+          done < <(git log --reverse --format='%ae%x09%an <%ae>' "$pr_commits" \
+            | awk -F '\t' -v primary="$primary_author_email" '$1 != primary && !seen[$1]++ { print $2 }')
           while read -r signoff; do
             trailers+=(--trailer "Signed-off-by: $signoff")
           done < <(git log --reverse --format='%(trailers:key=Signed-off-by,valueonly)' "$pr_commits" | sed '/^$/d')
@@ -134,7 +135,7 @@ jobs:
              || grep -q 'no new changes' "$RUNNER_TEMP/push.log"; then
             exit 0
           fi
-          echo "rejection=$(sed -n 's/.*\[remote rejected\][^(]*(\(.*\))$/\1/p' "$RUNNER_TEMP/push.log" | head -n1)" >> "$GITHUB_OUTPUT"
+          echo "rejection=$(sed -n 's/.*\[remote rejected\][^(]*(\(.*\))$/\1/p; T; q' "$RUNNER_TEMP/push.log")" >> "$GITHUB_OUTPUT"
           exit 1
 
       - uses: marocchino/sticky-pull-request-comment@5770ad5eb8f42dd2c4f34da00c94c5381e49af88 # v3.0.5
