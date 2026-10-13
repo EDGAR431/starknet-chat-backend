@@ -6,6 +6,7 @@ gh = "2.25.0"
 
 rust = "1.92.0"
 "cargo:cargo-nextest" = "0.9.122"
+"cargo:cargo-edit" = "0.13.13"
 
 "github:git-town/git-town" = "22.7.1"
 
@@ -27,3 +28,12 @@ DATABASE_PORT = "27017"
 RABBIT_PORT = "5672"
 REDIS_PORT = "6379"
 _.file = { path = ".env", tools = true }
+
+[tasks."release:bump"]
+file = "git::https://gerrit.stoatinternal.com/release-tools.git//tasks/release/bump?ref=v1.0.0"
+
+[tasks."release:tag"]
+file = "git::https://gerrit.stoatinternal.com/release-tools.git//tasks/release/tag?ref=v1.0.0"
+
+[tasks."release:notes"]
+file = "git::https://gerrit.stoatinternal.com/release-tools.git//tasks/release/notes?ref=v1.0.0"
