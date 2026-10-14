@@ -4,8 +4,8 @@ use std::time::Duration;
 
 use iso8601_timestamp::Timestamp;
 use revolt_database::{
-    util::{email::normalise_email, password::assert_safe},
-    Database, EmailVerification, MFATicket,
+    util::{email::normalise_email, google_oauth::verify_google_id_token, password::assert_safe},
+    Account, Database, EmailVerification, MFATicket,
 };
 use revolt_models::v0;
 use revolt_result::{create_error, Result};
@@ -132,6 +132,82 @@ pub async fn login(
             }
 
             // MFA passed, clear lockout information if present
+            if account.lockout.is_some() {
+                account.lockout = None;
+                account.save(db).await?;
+            }
+
+            (account, friendly_name)
+        }
+        v0::DataLogin::Google {
+            id_token,
+            friendly_name,
+        } => {
+            // Verify the token with Google and extract the identity it vouches for
+            let identity = verify_google_id_token(&id_token).await?;
+
+            // First, see if this Google account is already linked to one of ours
+            let mut account = db
+                .fetch_account_by_google_id(&identity.google_user_id)
+                .await?;
+
+            // Otherwise, fall back to matching by verified email and link it
+            if account.is_none() {
+                let email_normalised = normalise_email(identity.email.clone());
+                if let Some(mut existing) = db
+                    .fetch_account_by_normalised_email(&email_normalised)
+                    .await?
+                {
+                    // Google has already verified this email address, so a
+                    // still-pending email verification on the existing
+                    // account can be cleared too.
+                    if !matches!(existing.verification, EmailVerification::Verified) {
+                        existing.verification = EmailVerification::Verified;
+                    }
+
+                    existing
+                        .link_google(db, identity.google_user_id.clone())
+                        .await?;
+                    account = Some(existing);
+                }
+            }
+
+            // Otherwise, this is a brand new user
+            let mut account = match account {
+                Some(account) => account,
+                None => {
+                    Account::new_from_google(db, identity.email, identity.google_user_id).await?
+                }
+            };
+
+            // Check for account lockout, same as password login
+            if let Some(lockout) = &account.lockout {
+                if let Some(expiry) = lockout.expiry {
+                    if expiry > Timestamp::now_utc() {
+                        db.bump_lockout_count(&account.id).await?;
+                        return Err(create_error!(LockedOut));
+                    }
+                }
+            }
+
+            // Check whether an MFA step is required, same as password login
+            if account.mfa.is_active() {
+                let mut ticket = MFATicket::new(account.id.clone(), false);
+                ticket.populate(&account.mfa).await;
+                ticket.save(db).await?;
+
+                return Ok(Json(v0::ResponseLogin::MFA {
+                    ticket: ticket.token,
+                    allowed_methods: account
+                        .mfa
+                        .get_methods()
+                        .into_iter()
+                        .map(Into::into)
+                        .collect(),
+                }));
+            }
+
+            // No MFA, clear lockout information if present
             if account.lockout.is_some() {
                 account.lockout = None;
                 account.save(db).await?;

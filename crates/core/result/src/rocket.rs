@@ -128,6 +128,8 @@ impl<'r> Responder<'r, 'static> for Error {
             ErrorType::DisallowedMFAMethod => Status::BadRequest,
             ErrorType::OperationFailed => Status::InternalServerError,
             ErrorType::IncorrectData { .. } => Status::BadRequest,
+            ErrorType::GoogleAuthFailed => Status::Unauthorized,
+            ErrorType::GoogleAuthNotConfigured => Status::BadRequest,
         };
 
         // Serialize the error data structure into JSON.

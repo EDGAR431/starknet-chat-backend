@@ -51,6 +51,12 @@ auto_derived_partial!(
 
         /// Multi-factor authentication information
         pub mfa: MultiFactorAuthentication,
+
+        /// Linked Google account id ("sub" claim), if this account has
+        /// "Sign in with Google" linked. `None` for accounts that have
+        /// never used Google sign-in.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pub google_id: Option<String>,
     },
     "PartialAccount"
 );
@@ -318,6 +324,7 @@ impl Account {
                 lockout: None,
 
                 mfa: Default::default(),
+                google_id: None,
             };
 
             // Send email verification
@@ -336,6 +343,57 @@ impl Account {
 
             Ok(account)
         }
+    }
+
+    /// Create a new account from a verified Google identity.
+    ///
+    /// Used the first time someone signs in with Google and no account with
+    /// a matching Google id or email exists yet. Since Google has already
+    /// verified the email address, the account is created already verified
+    /// and with no usable password (password login stays unavailable until
+    /// the user explicitly sets one).
+    pub async fn new_from_google(db: &Database, email: String, google_id: String) -> Result<Account> {
+        let email_normalised = normalise_email(email.clone());
+
+        // A random, never-disclosed password so `password` can stay a plain
+        // `String` rather than `Option<String>` across the whole codebase.
+        // It is argon2-hashed like any other password and cannot be derived
+        // or guessed, so it provides no way to log in &mdash; only Google
+        // sign-in (or a password explicitly set later) will work.
+        let unusable_password = hash_password(nanoid!(64))?;
+
+        let account = Account {
+            id: ulid::Ulid::new().to_string(),
+
+            email,
+            email_normalised,
+            password: unusable_password,
+
+            disabled: false,
+            verification: EmailVerification::Verified,
+            password_reset: None,
+            deletion: None,
+            lockout: None,
+
+            mfa: Default::default(),
+            google_id: Some(google_id),
+        };
+
+        account.save(db).await?;
+
+        EventV1::CreateAccount {
+            account: account.clone(),
+        }
+        .global()
+        .await;
+
+        Ok(account)
+    }
+
+    /// Link a Google account id to this (already existing) account.
+    pub async fn link_google(&mut self, db: &Database, google_id: String) -> Result<()> {
+        self.google_id = Some(google_id);
+        self.save(db).await
     }
 
     /// Create a new session

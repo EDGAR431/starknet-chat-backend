@@ -64,7 +64,8 @@ impl serde::Serialize for Error {
                 | ErrorType::InvalidToken
                 | ErrorType::UnverifiedAccount
                 | ErrorType::LockedOut
-                | ErrorType::DisallowedMFAMethod => None,
+                | ErrorType::DisallowedMFAMethod
+                | ErrorType::GoogleAuthFailed => None,
             _ => Some(self.location.as_str()),
         };
 
@@ -247,6 +248,10 @@ pub enum ErrorType {
 
     TotpAlreadyEnabled,
     DisallowedMFAMethod,
+
+    // ? Google OAuth errors
+    GoogleAuthFailed,
+    GoogleAuthNotConfigured,
 }
 
 #[macro_export]

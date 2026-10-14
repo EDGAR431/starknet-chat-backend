@@ -156,6 +156,32 @@ impl Default for Soundboard {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+pub struct GoogleOAuth {
+    /// OAuth 2.0 Client ID issued by Google Cloud Console for the "Web
+    /// application" credential. Used to validate that an ID token presented
+    /// to `/auth/session/login` was actually issued for this app (the
+    /// `aud` claim). Empty disables Google sign-in entirely.
+    #[serde(default)]
+    pub client_id: String,
+
+    /// OAuth 2.0 Client ID for the "Android" credential, if the Android
+    /// client uses a separate one. When set, either this or `client_id`
+    /// is accepted as a valid `aud` claim. Empty means only `client_id`
+    /// is accepted.
+    #[serde(default)]
+    pub android_client_id: String,
+}
+
+impl Default for GoogleOAuth {
+    fn default() -> Self {
+        Self {
+            client_id: String::new(),
+            android_client_id: String::new(),
+        }
+    }
+}
+
+#[derive(Deserialize, Debug, Clone)]
 pub struct Hosts {
     pub app: String,
     pub api: String,
@@ -490,6 +516,8 @@ pub struct Settings {
     pub hosts: Hosts,
     #[serde(default)]
     pub soundboard: Soundboard,
+    #[serde(default)]
+    pub google_oauth: GoogleOAuth,
     pub api: Api,
     pub pushd: Pushd,
     pub january: January,

@@ -123,6 +123,8 @@ impl IntoResponse for Error {
             ErrorType::DisallowedMFAMethod => StatusCode::BAD_REQUEST,
             ErrorType::OperationFailed => StatusCode::INTERNAL_SERVER_ERROR,
             ErrorType::IncorrectData { .. } => StatusCode::BAD_REQUEST,
+            ErrorType::GoogleAuthFailed => StatusCode::UNAUTHORIZED,
+            ErrorType::GoogleAuthNotConfigured => StatusCode::BAD_REQUEST,
         };
 
         (status, Json(&self)).into_response()

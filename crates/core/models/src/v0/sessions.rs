@@ -71,6 +71,12 @@ auto_derived!(
             /// Friendly name used for the session
             friendly_name: Option<String>,
         },
+        Google {
+            /// ID token obtained from Google Sign-In on the client
+            id_token: String,
+            /// Friendly name used for the session
+            friendly_name: Option<String>,
+        },
     }
 
     #[serde(tag = "result")]

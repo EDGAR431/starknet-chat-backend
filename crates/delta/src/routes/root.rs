@@ -13,6 +13,16 @@ pub struct CaptchaFeature {
     pub key: String,
 }
 
+/// # Google Sign-In Configuration
+#[derive(Serialize, JsonSchema, Debug)]
+pub struct GoogleFeature {
+    /// Whether "Sign in with Google" is enabled
+    pub enabled: bool,
+    /// OAuth 2.0 Client ID (type "Web application") to use with Google
+    /// Identity Services. This is a public identifier, safe to expose.
+    pub client_id: String,
+}
+
 /// # Generic Service Configuration
 #[derive(Serialize, JsonSchema, Debug)]
 pub struct Feature {
@@ -45,6 +55,8 @@ pub struct VoiceFeature {
 pub struct RevoltFeatures {
     /// hCaptcha configuration
     pub captcha: CaptchaFeature,
+    /// Google Sign-In configuration
+    pub google: GoogleFeature,
     /// Whether email verification is enabled
     pub email: bool,
     /// Whether this server is invite only
@@ -199,6 +211,10 @@ pub async fn root() -> Result<Json<RevoltConfig>> {
             captcha: CaptchaFeature {
                 enabled: !config.api.security.captcha.hcaptcha_key.is_empty(),
                 key: config.api.security.captcha.hcaptcha_sitekey.clone(),
+            },
+            google: GoogleFeature {
+                enabled: !config.google_oauth.client_id.is_empty(),
+                client_id: config.google_oauth.client_id.clone(),
             },
             email: !config.api.smtp.host.is_empty(),
             invite_only: config.api.registration.invite_only,

@@ -17,6 +17,17 @@ redis = "redis://redis/"
 # Can also be set via the REVOLT_SOUNDBOARD__SYSTEM_BOT_TOKEN env var.
 system_bot_token = ""
 
+[google_oauth]
+# OAuth 2.0 Client ID (type "Web application") from Google Cloud Console.
+# Required for the "Sign in with Google" button on the web/desktop client.
+# Leave empty to disable Google sign-in entirely.
+# Can also be set via the REVOLT_GOOGLE_OAUTH__CLIENT_ID env var.
+client_id = ""
+# Optional separate OAuth 2.0 Client ID (type "Android") used by the mobile
+# app. If set, ID tokens issued for either client_id are accepted.
+# Can also be set via the REVOLT_GOOGLE_OAUTH__ANDROID_CLIENT_ID env var.
+android_client_id = ""
+
 [hosts]
 # Web locations of various services
 # Defaults assume all services are reverse-proxied

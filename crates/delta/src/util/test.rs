@@ -86,6 +86,7 @@ impl TestHarness {
             mfa: Default::default(),
             password_reset: None,
             verification: EmailVerification::Verified,
+            google_id: None,
         };
 
         self.db.save_account(&account).await.expect("`Account`");

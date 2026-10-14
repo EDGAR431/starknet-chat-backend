@@ -5,6 +5,7 @@ pub mod captcha;
 pub mod chunked;
 pub mod email;
 mod funcs;
+pub mod google_oauth;
 pub mod idempotency;
 pub mod ip;
 pub mod password;
