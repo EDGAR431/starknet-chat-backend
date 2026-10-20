@@ -26,7 +26,7 @@ struct MigrationInfo {
     revision: i32,
 }
 
-pub const LATEST_REVISION: i32 = 55; // MUST BE +1 to last migration
+pub const LATEST_REVISION: i32 = 56; // MUST BE +1 to last migration
 
 pub async fn migrate_database(db: &MongoDb) {
     let migrations = db.col::<Document>("migrations");
@@ -1593,6 +1593,32 @@ pub async fn run_migrations(db: &MongoDb, revision: i32) -> i32 {
                 "$bit": {
                     "default_permissions": {
                         "or": ChannelPermission::UseExternalEmojis as i64
+                    },
+                },
+            },
+            )
+            .await
+            .expect("Failed to update default_permissions");
+    };
+
+    if revision <= 55 {
+        info!("Running migration [revision 55 / 20-10-2026]: Re-grant UseSoundboard at its new bit position");
+
+        // UseSoundboard was originally assigned bit 1 << 41 by our fork, which
+        // now collides with upstream's own UseExternalEmojis permission added
+        // at the same bit. It has been moved to bit 1 << 42 to resolve the
+        // collision, but any server created before this merge has bit 41 (not
+        // 42) baked into its stored `default_permissions` from that era, and
+        // the soundboard route handlers don't currently enforce this
+        // permission server-side -- so this is a purely cosmetic/consistency
+        // fix for permission-editor UIs, not a functional access change.
+        db.col::<Document>("servers")
+            .update_many(
+                doc! {},
+                doc! {
+                "$bit": {
+                    "default_permissions": {
+                        "or": ChannelPermission::UseSoundboard as i64
                     },
                 },
             },
