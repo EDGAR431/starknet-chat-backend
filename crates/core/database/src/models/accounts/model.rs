@@ -694,7 +694,7 @@ impl Account {
             user_id: self.id.clone(),
             exclude_session_id,
         }
-        .private(self.id.clone())
+        .p(self.id.clone())
         .await;
 
         Ok(())

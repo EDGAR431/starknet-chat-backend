@@ -17,6 +17,9 @@ impl crate::Bot {
                 .profile
                 .and_then(|profile| profile.content)
                 .unwrap_or_default(),
+            privacy_policy_url: self.privacy_policy_url,
+            terms_of_service_url: self.terms_of_service_url,
+            default_permissions: self.default_permissions,
         }
     }
 }
@@ -28,6 +31,7 @@ impl From<crate::Bot> for Bot {
             owner_id: value.owner,
             token: value.token,
             public: value.public,
+            default_permissions: value.default_permissions,
             analytics: value.analytics,
             discoverable: value.discoverable,
             interactions_url: value.interactions_url,
@@ -63,21 +67,34 @@ impl From<crate::Invite> for Invite {
                 code,
                 creator,
                 channel,
+                max_uses,
+                uses,
+                expires
             } => Invite::Group {
                 code,
                 creator,
                 channel,
+                max_uses,
+                uses,
+                expires,
+
             },
             crate::Invite::Server {
                 code,
                 server,
                 creator,
                 channel,
+                max_uses,
+                uses,
+                expires,
             } => Invite::Server {
                 code,
                 server,
                 creator,
                 channel,
+                max_uses,
+                uses,
+                expires,
             },
         }
     }
@@ -1009,6 +1026,7 @@ impl From<crate::Role> for Role {
             hoist: value.hoist,
             rank: value.rank,
             icon: value.icon.map(|f| f.into()),
+            owner: value.owner
         }
     }
 }
@@ -1023,6 +1041,7 @@ impl From<Role> for crate::Role {
             hoist: value.hoist,
             rank: value.rank,
             icon: value.icon.map(|f| f.into()),
+            owner: value.owner
         }
     }
 }
@@ -1037,6 +1056,7 @@ impl From<crate::PartialRole> for PartialRole {
             hoist: value.hoist,
             rank: value.rank,
             icon: value.icon.map(|f| f.into()),
+            owner: value.owner
         }
     }
 }
@@ -1051,6 +1071,7 @@ impl From<PartialRole> for crate::PartialRole {
             hoist: value.hoist,
             rank: value.rank,
             icon: value.icon.map(|f| f.into()),
+            owner: value.owner
         }
     }
 }

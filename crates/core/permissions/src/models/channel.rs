@@ -31,6 +31,8 @@ pub enum ChannelPermission {
     ManageRole = 1 << 3,
     /// Manage server customisation (includes emoji)
     ManageCustomisation = 1 << 4,
+    /// Allow external emoji usage
+    UseExternalEmojis = 1 << 41,
 
     // % 1 bit reserved
 
@@ -105,9 +107,9 @@ pub enum ChannelPermission {
 
     // * Misc. permissions
     /// Play sounds from a soundboard in a voice call
-    UseSoundboard = 1 << 41,
+    UseSoundboard = 1 << 42,
 
-    // % Bits 42 to 52: free area
+    // % Bits 43 to 52: free area
     // % Bits 53 to 64: do not use
 
     // * Grant all permissions
@@ -162,7 +164,8 @@ pub static DEFAULT_PERMISSION_SERVER: Lazy<u64> = Lazy::new(|| {
         ChannelPermission::React
             + ChannelPermission::ChangeNickname
             + ChannelPermission::ChangeAvatar
-            + ChannelPermission::UseSoundboard,
+            + ChannelPermission::UseSoundboard
+            + ChannelPermission::UseExternalEmojis,
     )
 });
 

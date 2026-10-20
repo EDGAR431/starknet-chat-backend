@@ -1,9 +1,9 @@
 [package]
 name = "revolt-database"
-version = "0.15.5"
+version = "0.16.0"
 edition = "2024"
 license = "AGPL-3.0-or-later"
-authors = ["Paul Makles <me@insrt.uk>"]
+authors = ["izzy <me@insrt.uk>"]
 description = "Revolt Backend: Database Implementation"
 repository = "https://github.com/stoatchat/stoatchat"
 
@@ -36,6 +36,7 @@ revolt-coalesced = { workspace = true }
 
 # Utility
 log = { workspace = true }
+tracing = { workspace = true }
 lru = { workspace = true }
 rand = { workspace = true }
 ulid = { workspace = true }
@@ -57,6 +58,7 @@ serde_json = { workspace = true }
 revolt_optional_struct = { workspace = true }
 serde = { workspace = true }
 iso8601-timestamp = { workspace = true, features = ["serde", "bson"] }
+erltf_serde = { workspace = true, features = ["elixir-interop"] }
 
 # Events
 redis-kiss = { workspace = true, default-features = false, features = [
