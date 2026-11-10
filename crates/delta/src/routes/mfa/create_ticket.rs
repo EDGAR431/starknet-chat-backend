@@ -155,3 +155,77 @@ mod tests {
         ));
     }
 }
+
+#[cfg(test)]
+mod google_repro {
+    use crate::{rocket, util::test::TestHarness};
+    use iso8601_timestamp::{Duration, Timestamp};
+    use revolt_database::{Account, PasswordReset};
+    use rocket::http::{Header, Status};
+
+    #[rocket::async_test]
+    async fn google_account_cannot_get_mfa_ticket_with_password() {
+        let harness = TestHarness::new().await;
+
+        let mut account = Account::new_from_google(
+            &harness.db,
+            format!("{}@gmail.com", TestHarness::rand_string()),
+            TestHarness::rand_string(),
+        )
+        .await
+        .expect("google account");
+
+        let session = account
+            .create_session(&harness.db, String::new())
+            .await
+            .expect("session");
+
+        eprintln!("MFA methods offered: {:?}", account.mfa.get_methods());
+
+        // 1. The UI's only option: type a password. Try a few guesses.
+        for guess in ["password_insecure", "", "Contraseña123!"] {
+            let res = harness
+                .client
+                .put("/auth/mfa/ticket")
+                .header(Header::new("X-Session-Token", session.token.clone()))
+                .body(serde_json::json!({ "password": guess }).to_string())
+                .dispatch()
+                .await;
+            eprintln!("ticket with password {:?} -> {}", guess, res.status());
+            assert_ne!(res.status(), Status::Ok);
+        }
+
+        // 2. Escape hatch: password reset flow (email step simulated).
+        account.password_reset = Some(PasswordReset {
+            token: "repro-token".to_string(),
+            expiry: Timestamp::now_utc() + Duration::seconds(300),
+        });
+        account.save(&harness.db).await.unwrap();
+
+        let new_pw = "correct horse battery staple 8841";
+        let res = harness
+            .client
+            .patch("/auth/account/reset_password")
+            .header(rocket::http::ContentType::JSON)
+            .body(
+                serde_json::json!({
+                    "token": "repro-token",
+                    "password": new_pw
+                })
+                .to_string(),
+            )
+            .dispatch()
+            .await;
+        eprintln!("reset_password -> {}", res.status());
+
+        // 3. After reset, does the same dialog work?
+        let res = harness
+            .client
+            .put("/auth/mfa/ticket")
+            .header(Header::new("X-Session-Token", session.token.clone()))
+            .body(serde_json::json!({ "password": new_pw }).to_string())
+            .dispatch()
+            .await;
+        eprintln!("ticket after reset -> {}", res.status());
+    }
+}
