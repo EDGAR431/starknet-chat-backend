@@ -165,7 +165,16 @@ mod google_repro {
 
     #[rocket::async_test]
     async fn google_account_cannot_get_mfa_ticket_with_password() {
-        let harness = TestHarness::new().await;
+        // TestHarness::new() also needs RabbitMQ; build only what we need.
+        struct H {
+            client: rocket::local::asynchronous::Client,
+            db: revolt_database::Database,
+        }
+        let client = rocket::local::asynchronous::Client::tracked(crate::web().await)
+            .await
+            .expect("rocket");
+        let db = client.rocket().state::<revolt_database::Database>().unwrap().clone();
+        let harness = H { client, db };
 
         let mut account = Account::new_from_google(
             &harness.db,
