@@ -11,6 +11,29 @@ El compose usa **imagenes propias** (no las oficiales de stoatchat):
 El resto (autumn, january, pushd, crond, voice-ingress...) sigue en imagenes oficiales v0.15.5.
 Si un cambio solo toca la API (rutas, MFA, limites), basta reconstruir **api**.
 
+## Metodo habitual: binario precompilado (el VPS NO compila)
+
+El VPS no tiene potencia para compilar Rust. El binario `revolt-delta` se compila aparte
+(`LIBZ_SYS_STATIC=1 cargo build --release -p revolt-delta`, ~15 min en 2 nucleos; el
+`LIBZ_SYS_STATIC=1` evita enlazar `libz` dinamicamente, que la imagen distroless no trae)
+y se entrega como `starknet-chat-backend-delta-XXXX.zip` con `target/release/revolt-delta` +
+`Dockerfile.package-delta`. Comprobar con `ldd` que solo depende de libssl, libcrypto,
+libgcc_s, libm y libc.
+
+```powershell
+scp -i $env:USERPROFILE\.ssh\id_ed25519_stoat starknet-chat-backend-delta-XXXX.zip root@45.133.178.187:/root/
+```
+
+```bash
+cd ~ && rm -rf delta-deploy && mkdir delta-deploy && unzip -q starknet-chat-backend-delta-XXXX.zip -d delta-deploy
+docker tag starknet-chat-backend-delta:v0.16.2-merge starknet-chat-backend-delta:antes-$(date +%Y%m%d-%H%M)
+cd delta-deploy && docker build -t starknet-chat-backend-delta:v0.16.2-merge -f Dockerfile.package-delta .
+cd ~/stoat && docker compose up -d --force-recreate api && docker compose logs --tail 30 api
+```
+
+Las secciones siguientes describen compilar dentro del VPS (lento; solo como alternativa).
+Para volver atras, ver la seccion 4.
+
 ## 1. Subir el codigo (desde el PC)
 
 ```powershell
