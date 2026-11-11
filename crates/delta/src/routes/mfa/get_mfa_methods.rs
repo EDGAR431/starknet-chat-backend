@@ -12,8 +12,7 @@ use rocket::serde::json::Json;
 pub async fn get_mfa_methods(account: Account) -> Json<Vec<v0::MFAMethod>> {
     Json(
         account
-            .mfa
-            .get_methods()
+            .verification_methods()
             .into_iter()
             .map(Into::into)
             .collect(),

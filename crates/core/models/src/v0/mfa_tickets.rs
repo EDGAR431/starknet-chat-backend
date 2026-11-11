@@ -37,6 +37,8 @@ auto_derived!(
         Password { password: String },
         Recovery { recovery_code: String },
         Totp { totp_code: String },
+        /// Re-confirm identity with a fresh Google ID token
+        Google { google_id_token: String },
     }
 
     #[derive(Default)]
@@ -59,6 +61,7 @@ auto_derived!(
         Password,
         Recovery,
         Totp,
+        Google,
     }
 
     /// # Totp Secret

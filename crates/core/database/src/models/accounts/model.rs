@@ -143,6 +143,7 @@ auto_derived!(
         Password,
         Recovery,
         Totp,
+        Google,
     }
 
     #[derive(Default)]
@@ -586,6 +587,19 @@ impl Account {
         }
     }
 
+    /// MFA methods usable to confirm a sensitive action (not for login).
+    ///
+    /// Accounts linked to Google can also confirm with a fresh Google ID
+    /// token, since accounts created through Google have no usable password.
+    /// If TOTP is enabled it stays mandatory, so Google is not offered then.
+    pub fn verification_methods(&self) -> Vec<MFAMethod> {
+        let mut methods = self.mfa.get_methods();
+        if self.google_id.is_some() && !self.mfa.is_active() {
+            methods.push(MFAMethod::Google);
+        }
+        methods
+    }
+
     /// Verify a user's password is correct
     pub fn verify_password(&self, plaintext_password: &str) -> Result<()> {
         argon2::verify_encoded(&self.password, plaintext_password.as_bytes())
@@ -608,7 +622,7 @@ impl Account {
         response: v0::MFAResponse,
         ticket: Option<&mut MFATicket>,
     ) -> Result<()> {
-        let allowed_methods = self.mfa.get_methods();
+        let allowed_methods = self.verification_methods();
 
         match response {
             v0::MFAResponse::Password { password } => {
@@ -658,6 +672,20 @@ impl Account {
                     }
                 } else {
                     Err(create_error!(DisallowedMFAMethod))
+                }
+            }
+            v0::MFAResponse::Google { google_id_token } => {
+                if !allowed_methods.contains(&MFAMethod::Google) {
+                    return Err(create_error!(DisallowedMFAMethod));
+                }
+
+                let identity =
+                    crate::util::google_oauth::verify_google_id_token(&google_id_token).await?;
+
+                if self.google_id.as_deref() == Some(identity.google_user_id.as_str()) {
+                    Ok(())
+                } else {
+                    Err(create_error!(InvalidCredentials))
                 }
             }
             v0::MFAResponse::Recovery { recovery_code } => {

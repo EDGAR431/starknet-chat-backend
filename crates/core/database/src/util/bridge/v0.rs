@@ -1721,6 +1721,7 @@ impl From<crate::MFAMethod> for MFAMethod {
             crate::MFAMethod::Password => MFAMethod::Password,
             crate::MFAMethod::Recovery => MFAMethod::Recovery,
             crate::MFAMethod::Totp => MFAMethod::Totp,
+            crate::MFAMethod::Google => MFAMethod::Google,
         }
     }
 }
