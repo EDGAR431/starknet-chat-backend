@@ -1,8 +1,7 @@
 use revolt_database::{
-    util::{permissions::DatabasePermissionQuery, reference::Reference},
+    util::reference::Reference,
     Database, SoundboardSoundParent, User,
 };
-use revolt_permissions::{calculate_server_permissions, ChannelPermission};
 use revolt_result::{create_error, Result};
 
 use rocket::State;
@@ -27,22 +26,23 @@ pub async fn delete_sound(
         return Err(create_error!(InvalidOperation));
     }
 
-    // If we uploaded the sound, we may delete it ourselves
-    if sound.creator_id != user.id {
-        match &sound.parent {
-            SoundboardSoundParent::Server { id } => {
-                let server = db.fetch_server(id.as_str()).await?;
-
-                let mut query = DatabasePermissionQuery::new(db, &user).server(&server);
-                calculate_server_permissions(&mut query)
-                    .await
-                    .throw_if_lacking_channel_permission(ChannelPermission::ManageCustomisation)?;
+    match &sound.parent {
+        // Server sounds can only be removed by the server owner, so nobody
+        // (not even their uploader or an admin) can delete them on a whim.
+        SoundboardSoundParent::Server { id } => {
+            let server = db.fetch_server(id.as_str()).await?;
+            if server.owner != user.id {
+                return Err(create_error!(MissingPermission {
+                    permission: "ServerOwner".to_string()
+                }));
             }
-            // Detached (personal) sounds have no server-level permission
-            // concept to fall back on, so a non-creator never has
-            // permission to delete them.
-            SoundboardSoundParent::Detached => return Err(create_error!(NotFound)),
-        };
+        }
+        // Personal sounds can only be deleted by the user who created them.
+        SoundboardSoundParent::Detached => {
+            if sound.creator_id != user.id {
+                return Err(create_error!(NotFound));
+            }
+        }
     }
 
     sound.delete(db).await?;
