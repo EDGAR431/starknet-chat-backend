@@ -88,6 +88,8 @@ impl VoiceClient {
                 room_join: true,
                 can_publish: true,
                 can_publish_data: false,
+                // Permite al cliente publicar atributos propios (p. ej. "deafened").
+                can_update_own_metadata: true,
                 can_publish_sources: allowed_sources
                     .into_iter()
                     .map(ToString::to_string)
