@@ -35,6 +35,22 @@ impl AbstractSoundboard for MongoDb {
         )
     }
 
+    /// Fetch the personal (detached) soundboard sounds created by a user
+    async fn fetch_personal_soundboard_sounds(
+        &self,
+        creator_id: &str,
+    ) -> Result<Vec<SoundboardSound>> {
+        query!(
+            self,
+            find,
+            COL,
+            doc! {
+                "creator_id": creator_id,
+                "parent.type": "Detached"
+            }
+        )
+    }
+
     /// Update soundboard sound with new information
     async fn update_soundboard_sound(
         &self,

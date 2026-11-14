@@ -20,6 +20,12 @@ pub trait AbstractSoundboard: Sync + Send {
         parent_id: &str,
     ) -> Result<Vec<SoundboardSound>>;
 
+    /// Fetch the personal (detached) soundboard sounds created by a user
+    async fn fetch_personal_soundboard_sounds(
+        &self,
+        creator_id: &str,
+    ) -> Result<Vec<SoundboardSound>>;
+
     /// Update soundboard sound with new information
     async fn update_soundboard_sound(
         &self,

@@ -44,6 +44,22 @@ impl AbstractSoundboard for ReferenceDb {
             .collect())
     }
 
+    /// Fetch the personal (detached) soundboard sounds created by a user
+    async fn fetch_personal_soundboard_sounds(
+        &self,
+        creator_id: &str,
+    ) -> Result<Vec<SoundboardSound>> {
+        let sounds = self.soundboard_sounds.lock().await;
+        Ok(sounds
+            .values()
+            .filter(|sound| {
+                sound.creator_id == creator_id
+                    && matches!(sound.parent, SoundboardSoundParent::Detached)
+            })
+            .cloned()
+            .collect())
+    }
+
     /// Update soundboard sound with new information
     async fn update_soundboard_sound(
         &self,

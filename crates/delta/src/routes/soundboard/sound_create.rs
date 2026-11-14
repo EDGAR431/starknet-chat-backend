@@ -10,6 +10,7 @@ use rocket::{serde::json::Json, State};
 /// Soundboards are capped locally rather than through a new config field, to
 /// avoid requiring every self-hosted Config.toml to be edited on upgrade.
 const MAX_SOUNDS_PER_SERVER: usize = 100;
+const MAX_PERSONAL_SOUNDS: usize = 50;
 const MAX_VOLUME: u16 = 200;
 
 /// # Create New Soundboard Sound
@@ -44,7 +45,13 @@ pub async fn create_sound(
                 return Err(create_error!(InvalidOperation));
             }
         }
-        v0::SoundboardSoundParent::Detached => return Err(create_error!(InvalidOperation)),
+        // Personal soundboard: any user may add sounds to their own board
+        v0::SoundboardSoundParent::Detached => {
+            let sounds = db.fetch_personal_soundboard_sounds(&user.id).await?;
+            if sounds.len() >= MAX_PERSONAL_SOUNDS {
+                return Err(create_error!(InvalidOperation));
+            }
+        }
     };
 
     let sound_id = Ulid::new().to_string();

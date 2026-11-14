@@ -50,11 +50,13 @@ auto_derived!(
 
 #[allow(clippy::disallowed_methods)]
 impl SoundboardSound {
-    /// Get parent id
+    /// Topic the events of this sound are published to: the server for a
+    /// server sound, or the creator's own user topic for a personal sound
+    /// (so only they receive it).
     fn parent(&self) -> &str {
         match &self.parent {
             SoundboardSoundParent::Server { id } => id,
-            SoundboardSoundParent::Detached => "",
+            SoundboardSoundParent::Detached => &self.creator_id,
         }
     }
 
