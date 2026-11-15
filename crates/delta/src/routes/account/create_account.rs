@@ -7,11 +7,11 @@ use revolt_config::config;
 use revolt_database::{
     util::{
         captcha::check_captcha,
-        email::validate_email,
+        email::{normalise_email, validate_email},
         password::assert_safe,
         shield::{validate_shield, ShieldValidationInput},
     },
-    Account, Database,
+    Account, Database, EmailVerification,
 };
 use revolt_models::v0;
 use revolt_result::{create_error, Result};
@@ -46,6 +46,18 @@ pub async fn create_account(
 
     // Ensure password is safe to use
     assert_safe(&data.password).await?;
+
+    // If an already-verified account owns this email, say so instead of
+    // silently sending a password-reset email. An account still waiting for
+    // verification keeps the old behaviour: its verification email is re-sent.
+    if let Some(existing) = db
+        .fetch_account_by_normalised_email(&normalise_email(data.email.clone()))
+        .await?
+    {
+        if !matches!(existing.verification, EmailVerification::Pending { .. }) {
+            return Err(create_error!(EmailInUse));
+        }
+    }
 
     // If required, fetch valid invite
     let invite = if config().await.api.registration.invite_only {

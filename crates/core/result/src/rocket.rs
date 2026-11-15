@@ -109,6 +109,7 @@ impl<'r> Responder<'r, 'static> for Error {
             ErrorType::BlockedByShield => Status::BadRequest,
             ErrorType::UnverifiedAccount => Status::Forbidden,
             ErrorType::EmailFailed => Status::InternalServerError,
+            ErrorType::EmailInUse => Status::Conflict,
             ErrorType::InvalidToken => Status::Unauthorized,
             ErrorType::MissingInvite => Status::BadRequest,
             ErrorType::InvalidInvite => Status::BadRequest,

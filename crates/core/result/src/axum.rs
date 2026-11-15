@@ -106,6 +106,7 @@ impl IntoResponse for Error {
             ErrorType::BlockedByShield => StatusCode::BAD_REQUEST,
             ErrorType::UnverifiedAccount => StatusCode::FORBIDDEN,
             ErrorType::EmailFailed => StatusCode::INTERNAL_SERVER_ERROR,
+            ErrorType::EmailInUse => StatusCode::CONFLICT,
             ErrorType::InvalidToken => StatusCode::UNAUTHORIZED,
             ErrorType::MissingInvite => StatusCode::BAD_REQUEST,
             ErrorType::InvalidInvite => StatusCode::BAD_REQUEST,

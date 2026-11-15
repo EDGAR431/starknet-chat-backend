@@ -65,6 +65,7 @@ impl serde::Serialize for Error {
                 | ErrorType::InvalidSession
                 | ErrorType::InvalidToken
                 | ErrorType::UnverifiedAccount
+                | ErrorType::EmailInUse
                 | ErrorType::LockedOut
                 | ErrorType::DisallowedMFAMethod
                 | ErrorType::GoogleAuthFailed => None,
@@ -239,6 +240,7 @@ pub enum ErrorType {
     BlockedByShield,
     UnverifiedAccount,
     EmailFailed,
+    EmailInUse,
     InvalidToken,
     MissingInvite,
     InvalidInvite,
