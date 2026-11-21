@@ -12,6 +12,16 @@
 The services and libraries that power the Stoat service.<br/>
 <br/>
 
+## StarknetChat
+
+This repository is a modified fork of Stoat's backend, powering [starknet-chat.tech](https://starknet-chat.tech). It is published here to comply with the AGPLv3 license. Related repositories:
+
+- Web client: https://github.com/EDGAR431/starknet-chat-web
+- Desktop app: https://github.com/EDGAR431/starknet-chat-desktop
+- Android app: https://github.com/EDGAR431/starknet-chat-android
+
+<br/>
+
 | Crate              | Path                                               | Description                         |                                                                                                                                                                                                                                                                                                           |
 | ------------------ | -------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/config`      | [crates/core/config](crates/core/config)           | Core: Configuration                 | ![Crates.io Version](https://img.shields.io/crates/v/revolt-config) ![Crates.io Version](https://img.shields.io/crates/msrv/revolt-config) ![Crates.io Version](https://img.shields.io/crates/size/revolt-config) ![Crates.io License](https://img.shields.io/crates/l/revolt-config)                     |
